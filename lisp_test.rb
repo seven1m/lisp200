@@ -2,6 +2,33 @@ require 'minitest/autorun'
 
 require_relative './lisp'
 
+class TestRead < Minitest::Test
+  def test_tokenize
+    code = "(hello 1 2 (/ 3) [* 4 5] \"(lispworld\")\n"
+    assert_equal ['(', 'hello', '1', '2', '(', '/', '3', ')', '[', '*', '4', '5', ']', "\"(lispworld\"", ')', "\n"], tokenize(code)
+  end
+
+  def test_read
+    code = '(hello 1 2 (/ 3) [* 4 5] "(lispworld")'
+    assert_equal [:hello, 1, 2, [:/, 3], [:*, 4, 5], "(lispworld"], READ(code)
+    assert_equal :foo, READ('foo')
+    assert_equal :foo, READ('foo ; comment')
+    assert_equal [:hello, :world], READ("(hello ; comment\n world)")
+    assert_equal 1, READ('1')
+    assert_equal -1, READ('-1')
+    assert_equal 2.3, READ('2.3')
+    assert_equal -2.3, READ('-2.3')
+    assert_equal [:def, :"=", [:fn, [:a, :b], [:".", :a, :==, :b]]], READ("(def = (fn [a b] (. a == b)))")
+  end
+end
+
+class TestPrint < Minitest::Test
+  def test_print
+    ast = [:hello, :world, [:list, 1, 2], "string"]
+    assert_equal '(hello world (list 1 2) "string")', PRINT(ast)
+  end
+end
+
 class TestCompileAndEval < MiniTest::Test
   def test_number
     b = binding
@@ -43,47 +70,11 @@ class TestCompileAndEval < MiniTest::Test
     assert_equal 2, b.eval(compile([:f, [:+, 1, 1]], b))
   end
 
-  def test_core_mul
-    b = core_binding
-    assert_equal 1, b.eval(compile([:"*"], b))
-    assert_equal 4, b.eval(compile([:"*", 4], b))
-    assert_equal 8, b.eval(compile([:"*", 4, 2], b))
-    assert_equal 24, b.eval(compile([:"*", 4, 2, 3], b))
-  end
-
-  def test_core_div
-    b = core_binding
-    assert_equal 0.5, b.eval(compile([:"/", 2], b))
-    assert_equal 4, b.eval(compile([:"/", 24, 6], b))
-    assert_equal 2, b.eval(compile([:"/", 24, 6, 2], b))
-  end
-
-  def test_core_equal
-    b = core_binding
-    assert_equal true, b.eval(compile([:"=", 1, 1], b))
-    assert_equal true, b.eval(compile([:"=", 2, 2], b))
-    assert_equal false, b.eval(compile([:"=", 1, 2], b))
-    assert_equal false, b.eval(compile([:"=", 1, nil], b))
-  end
-
-  def test_core_nil?
-    b = core_binding
-    assert_equal true, b.eval(compile([:nil?, nil], b))
-    assert_equal false, b.eval(compile([:nil?, 1], b))
-    assert_equal false, b.eval(compile([:nil?, "string"], b))
-  end
-
   def test_core_throw
     b = core_binding
     assert_raises "error" do
       b.eval(compile([:throw, "error"], b))
     end
-  end
-
-  def test_core_length
-    b = core_binding
-    assert_equal 0, b.eval(compile([:length, nil], b))
-    assert_equal 1, b.eval(compile([:length, [:cons, 1, nil]], b))
   end
 
   def test_core_print
@@ -92,21 +83,16 @@ class TestCompileAndEval < MiniTest::Test
     assert_output("hello world\n") { b.eval(compile([:println, "hello world"], b)) }
   end
 
-  def test_core_str
-    b = core_binding
-    assert_equal "hello world", b.eval(compile([:str, "hello", " ", "world"], b))
-  end
-
   def test_core_first_rest_last
     b = core_binding
     assert_equal 1, b.eval(compile([:first, [:cons, 1, [:cons, 2, [:cons, 3, nil]]]], b))
-    assert_nil b.eval(compile([:first, nil], b))
+    assert_nil b.eval(compile([:first, [:list]], b))
     assert_equal [2, 3], b.eval(compile([:rest, [:cons, 1, [:cons, 2, [:cons, 3, nil]]]], b))
     assert_equal [3], b.eval(compile([:rest, [:cons, 2, [:cons, 3, nil]]], b))
-    assert_nil b.eval(compile([:rest, [:cons, 3, nil]], b))
-    assert_nil b.eval(compile([:rest, nil], b))
+    assert_equal [], b.eval(compile([:rest, [:cons, 3, nil]], b))
+    assert_equal [], b.eval(compile([:rest, [:list]], b))
     assert_equal 3, b.eval(compile([:last, [:cons, 1, [:cons, 2, [:cons, 3, nil]]]], b))
-    assert_nil b.eval(compile([:last, nil], b))
+    assert_nil b.eval(compile([:last, [:list]], b))
   end
 
   def test_try
@@ -119,22 +105,6 @@ class TestCompileAndEval < MiniTest::Test
   def test_apply
     b = core_binding
     assert_equal 6, b.eval(compile([:apply, :+, [:cons, 1, [:cons, 2, [:cons, 3, nil]]]], b))
-  end
-
-  def test_compile_block
-    b = binding
-    code = compile_block(
-      [
-        [:def, :x, 1],
-        [:def, :y, [:"+", :x, 1]],
-        [:def, :double, [:fn, [:n], [:"*", :n, 2]]],
-        [:def, :z, [:double, :y]]
-      ],
-      b
-    )
-    b = core_binding
-    b.eval(code)
-    assert_equal 4, b.local_variable_get(:z)
   end
 
   def test_quote

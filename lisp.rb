@@ -1,5 +1,59 @@
 #!/usr/bin/env ruby -W0
 
+require 'json'
+
+def tokenize(code)
+  code.scan(/"(?:[^"]|\\")*"|[\(\)\[\]]|[^\(\)\[\]"\s]+|;|\n/)
+end
+
+def READ(code)
+  ast = nil
+  stack = []
+  comment = false
+  tokenize(code).each do |token|
+    comment = false if token == "\n"
+    next if comment
+    case token
+    when '(', '['
+      if ast.nil?
+        ast = (stack << []).last
+      else
+        stack.last << (stack << []).last
+      end
+    when ')', ']'
+      stack.pop
+    when ';'
+      comment = true
+    when "\n"
+      :noop
+    else
+      atom = case token
+             when /\A".*"\z/ then JSON.parse(token)
+             when /\A\-?[0-9]+\.[0-9]+\z/ then token.to_f
+             when /\A\-?[0-9]+\z/ then token.to_i
+             else token.to_sym
+             end
+      if stack.any?
+        stack.last << atom
+      else
+        return atom
+      end
+    end
+  end
+  ast
+end
+
+def PRINT(node)
+  case node
+  when Array
+    '(' + node.map { |n| PRINT(n) }.join(' ') + ')'
+  when Symbol
+    node.to_s
+  else
+    node.inspect
+  end
+end
+
 MACROS = {}
 
 def is_pair(node)
@@ -57,10 +111,11 @@ def compile(ast, b)
       (_, obj, message, *args) = ast
       obj = compile(obj, b)
       args.map! { |a| compile(a, b) }
+      send = message.is_a?(String) ? "#{obj}.#{message}(ARGS)" : "#{obj}.send(#{compile(message, b)}, ARGS)"
       if args.any?
-        "#{obj}.send(#{message.inspect}, #{args.join(', ')})"
+        send.sub(/ARGS/, args.join(', '))
       else
-        "#{obj}.send(#{message.inspect})"
+        send.sub(/(, )?ARGS/, '')
       end
     when :quasiquote
       compile(quasiquote(ast[1]), b)
@@ -90,14 +145,18 @@ def compile(ast, b)
   end
 end
 
-def compile_block(nodes, b)
-  nodes.map { |ast| compile(ast, b) }.join("\n")
+def run_file(path, b)
+  READ("(" + File.read(path) + ")").each do |node|
+    b.eval(compile(node, b))
+  end
 end
 
 SAFE_CHARS = /^[A-Za-z_]+$/
 ALT_NAMES = {
-  :throw => :throw_,
+  :and => :and_,
+  :or => :or_,
   :print => :print_,
+  :throw => :throw_,
 }
 
 def safe_name(name)
@@ -106,34 +165,29 @@ def safe_name(name)
 end
 
 def core_binding
-  cons = ->(h, t) { [h] + (t || []) }
-  concat = ->(l1, l2) { l1 + l2 }
   b = binding
-  require 'pp'
-  eval(File.read('core.lisp.rb')).each do |node|
-    b.eval(compile(node, b))
-  end
+  run_file('core.lisp', b)
   b
 end
 
 if $0 == __FILE__
   if ARGV.any?
     b = core_binding
-    b.eval(compile_block(eval(File.read(ARGV.first)), b))
+    run_file(ARGV.first, b)
   else
     b = core_binding
     loop do
       print "user> "
       str = $stdin.gets
       exit if str.nil?
-      ast = eval(str)
+      ast = READ(str)
       begin
         result = b.eval(compile(ast, b))
       rescue StandardError => e
         puts "#{e.class}: #{e.message}"
         puts e.backtrace
       else
-        p result
+        puts PRINT(result)
       end
     end
   end

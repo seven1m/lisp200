@@ -29,11 +29,7 @@ def READ(code)
              when /\A\-?[0-9]+\z/ then token.to_i
              else token.to_sym
              end
-      if stack.any?
-        stack.last << atom
-      else
-        return atom
-      end
+      stack.last << atom
     end
   end
   tree.first

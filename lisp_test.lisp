@@ -27,9 +27,6 @@
 (assert= 2 (length (cons 1 (cons 2 nil))) nil)
 (assert= 2 (length (list 1 2)) nil)
 (assert= "hello world" (str "hello" " " "world") nil)
-(assert= "hello world"
-         (str "hello" " " "world")
-         nil)
 (assert= (list 1 3 5)
          (filter odd? (list 1 2 3 4 5))
          nil)

@@ -7,19 +7,15 @@ def tokenize(code)
 end
 
 def READ(code)
-  ast = nil
-  stack = []
+  tree = []
+  stack = [tree]
   comment = false
   tokenize(code).each do |token|
     comment = false if token == "\n"
     next if comment
     case token
     when '(', '['
-      if ast.nil?
-        ast = (stack << []).last
-      else
-        stack.last << (stack << []).last
-      end
+      stack.last << (stack << []).last
     when ')', ']'
       stack.pop
     when ';'
@@ -40,7 +36,7 @@ def READ(code)
       end
     end
   end
-  ast
+  tree.first
 end
 
 def PRINT(node)

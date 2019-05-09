@@ -3,36 +3,46 @@
 require 'json'
 
 def tokenize(code)
-  code.scan(/"(?:[^"]|\\")*"|[\(\)\[\]]|[^\(\)\[\]"\s]+|;|\n/)
+  code.scan(/"(?:[^"]|\\")*"|;.*\n?|,@|[\(\)\[\]'`,]|[^\(\)\[\]"\s'`,]+/)
+end
+
+def read_atom(tokens)
+  token = tokens.shift
+  case token
+  when '(', '[' then read_list(tokens)
+  when /\A;/ then nil
+  when "'" then [:quote, read_atom(tokens)]
+  when "`" then [:quasiquote, read_atom(tokens)]
+  when "," then [:unquote, read_atom(tokens)]
+  when ",@" then [:splice_unquote, read_atom(tokens)]
+  when /\A\s+\z/ then nil
+  when /\A".*"\z/ then JSON.parse(token)
+  when /\A\-?[0-9]+\.[0-9]+\z/ then token.to_f
+  when /\A\-?[0-9]+\z/ then token.to_i
+  else token.to_sym
+  end
+end
+
+def read_list(tokens)
+  coll = []
+  while (token = tokens.shift)
+    case token
+    when '(', '['
+      coll << read_list(tokens)
+    when ')', ']'
+      return coll
+    else
+      tokens.unshift(token)
+      atom = read_atom(tokens)
+      coll << atom if atom
+    end
+  end
+  raise 'unbalanced parens'
 end
 
 def READ(code)
-  tree = []
-  stack = [tree]
-  comment = false
-  tokenize(code).each do |token|
-    comment = false if token == "\n"
-    next if comment
-    case token
-    when '(', '['
-      stack.last << (stack << []).last
-    when ')', ']'
-      stack.pop
-    when ';'
-      comment = true
-    when "\n"
-      :noop
-    else
-      atom = case token
-             when /\A".*"\z/ then JSON.parse(token)
-             when /\A\-?[0-9]+\.[0-9]+\z/ then token.to_f
-             when /\A\-?[0-9]+\z/ then token.to_i
-             else token.to_sym
-             end
-      stack.last << atom
-    end
-  end
-  tree.first
+  tokens = tokenize(code)
+  read_atom(tokens)
 end
 
 def PRINT(node)

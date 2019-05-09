@@ -5,12 +5,10 @@ require_relative './lisp'
 class TestRead < Minitest::Test
   def test_tokenize
     code = "(hello 1 2 (/ 3) [* 4 5] \"(lispworld\")\n"
-    assert_equal ['(', 'hello', '1', '2', '(', '/', '3', ')', '[', '*', '4', '5', ']', "\"(lispworld\"", ')', "\n"], tokenize(code)
+    assert_equal ['(', 'hello', '1', '2', '(', '/', '3', ')', '[', '*', '4', '5', ']', "\"(lispworld\"", ')'], tokenize(code)
   end
 
   def test_read
-    code = '(hello 1 2 (/ 3) [* 4 5] "(lispworld")'
-    assert_equal [:hello, 1, 2, [:/, 3], [:*, 4, 5], "(lispworld"], READ(code)
     assert_equal :foo, READ('foo')
     assert_equal :foo, READ('foo ; comment')
     assert_equal [:hello, :world], READ("(hello ; comment\n world)")
@@ -18,7 +16,18 @@ class TestRead < Minitest::Test
     assert_equal -1, READ('-1')
     assert_equal 2.3, READ('2.3')
     assert_equal -2.3, READ('-2.3')
+    code = '(hello 1 2 (/ 3) [* 4 5] "(lispworld")'
+    assert_equal [:hello, 1, 2, [:/, 3], [:*, 4, 5], "(lispworld"], READ(code)
     assert_equal [:def, :"=", [:fn, [:a, :b], [:".", :a, :==, :b]]], READ("(def = (fn [a b] (. a == b)))")
+    assert_equal [:quote, :foo], READ("'foo")
+    assert_equal [:quote, [1, 2, 3]], READ("'(1 2 3)")
+    assert_equal [:quasiquote, :foo], READ("`foo")
+    assert_equal [:quasiquote, [1, 2, 3]], READ("`(1 2 3)")
+    assert_equal [:unquote, :foo], READ(",foo")
+    assert_equal [:unquote, [:list, 1, 2, 3]], READ(",(list 1 2 3)")
+    assert_equal [:splice_unquote, [:list, 1, 2, 3]], READ(",@(list 1 2 3)")
+    assert_raises('unbalanced parens') { READ('(foo') }
+    assert_raises('unbalanced parens') { READ('(foo bar (baz)') }
   end
 end
 

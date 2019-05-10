@@ -48,7 +48,7 @@ end
 def PRINT(node)
   case node
   when Array
-    '(' + node.map { |n| PRINT(n) }.join(' ') + ')'
+    "'(" + node.map { |n| PRINT(n) }.join(' ') + ')'
   when Symbol
     node.to_s
   else

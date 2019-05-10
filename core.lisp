@@ -17,6 +17,7 @@
 (def first (fn [a] (. a "first")))
 (def rest (fn [a] (if (< (length a) 2) (list) (. a "[]" (range 1 -1)))))
 (def last (fn [a] (. a "last")))
+(def nth (fn [a b] (. a "[]" b)))
 
 (defmacro and
   (fn [& args]
@@ -71,10 +72,24 @@
                (reduce (fn [t n] (. t "-" n)) 0 args)
                "to_i"))))
 
-(def print (fn [a] (. Kernel "print" (. a "to_s"))))
-(def println (fn [a] (print a) (print "\n")))
-(defmacro not (fn [a] (if a false true)))
-(defmacro unless (fn [pred t f] `(if ,pred ,f ,t)))
+(def map
+     (fn [f l]
+         (if (empty? l)
+           l
+           (cons (f (first l)) (map f (rest l))))))
+
+(def map-indexed
+     (fn [f l]
+         ; we don't have let yet, and this function is used by let :-)
+         ((fn [mi]
+             (mi f l 0 mi))
+             (fn [f l i mi]
+                 (if (empty? l)
+                   l
+                   (cons
+                     (f i (first l))
+                     (mi f (rest l) (+ i 1) mi)))))))
+
 (def str
      (fn [& args]
          (if (empty? args)
@@ -83,17 +98,34 @@
              (. (first args) "to_s")
              "+"
              (apply str (rest args))))))
+
+(def print (fn [a] (. Kernel "print" (. a "to_s"))))
+(def println (fn [a] (print a) (print "\n")))
+(def pr-str (fn [a] (. Object (str "" "PRINT") a)))
+(def pr (fn [a] (print (pr-str a))))
+(def prn (fn [a] (pr a) (print "\n")))
+
+(defmacro not (fn [a] (if a false true)))
+(defmacro unless (fn [pred t f] `(if ,pred ,f ,t)))
 (def even? (fn [a] (. a "even?")))
 (def odd? (fn [a] (. a "odd?")))
 
-;(defmacro let (fn [binds & body]
-;(def binds nil)
-;(def vals nil)
-;(:
-;(if (empty? binds)
-;`(do ,@body)
+(defmacro let
+  (fn [binds & body]
+      ((fn [binds vals]
+          (if (empty? binds)
+            `(do ,@body)
+            `((fn ,binds ,@body) ,@vals)
+            ))
+       (map last (filter (fn [v] (even? (first v))) (map-indexed list binds)))
+       (map last (filter (fn [v] (odd? (first v))) (map-indexed list binds))))))
 
-;)))
+(defmacro letrec
+  (fn [binds & body]
+      (if (empty? binds)
+        `(do ,@body)
+        `(let [,(first binds) ,(nth binds 1)] (letrec ,(rest (rest binds)) ,@body))
+        )))
 
 (defmacro assert
   (fn [pred message]

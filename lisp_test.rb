@@ -34,7 +34,7 @@ end
 class TestPrint < Minitest::Test
   def test_print
     ast = [:hello, :world, [:list, 1, 2], "string"]
-    assert_equal '(hello world (list 1 2) "string")', PRINT(ast)
+    assert_equal "'(hello world '(list 1 2) \"string\")", PRINT(ast)
   end
 end
 

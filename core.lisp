@@ -105,7 +105,7 @@
 (def pr (fn [a] (print (pr-str a))))
 (def prn (fn [a] (pr a) (print "\n")))
 
-(defmacro not (fn [a] (if a false true)))
+(defmacro not (fn [a] `(if ,a false true)))
 (defmacro unless (fn [pred t f] `(if ,pred ,f ,t)))
 (def even? (fn [a] (. a "even?")))
 (def odd? (fn [a] (. a "odd?")))
@@ -128,23 +128,35 @@
         )))
 
 (defmacro assert
-  (fn [pred message]
+  (fn [pred & messages]
       `(if ,pred
          (print ".")
          (println
            (str
-             "assertion failure "
-             (if ,message
-               ,message
-               (str "Expected " (. ,pred "inspect") " to be truthy")))))))
+             "assertion failure: "
+             (if ,(not (empty? messages))
+               ,(first messages)
+               (str "expected " ,(pr-str pred) " be truthy")))))))
+
+(defmacro refute
+  (fn [pred & messages]
+      `(if ,pred
+         (println
+           (str
+             "assertion failure: "
+             (if ,(not (empty? messages))
+               ,(first messages)
+               (str "expected " ,(pr-str pred) " be false or nil"))))
+         (print "."))))
+
 (defmacro assert=
-  (fn [expected actual message]
+  (fn [expected actual & messages]
       `(if (= ,expected ,actual)
          (print ".")
          (println
            (str
              "\n"
-             "assertion failure "
-             (if ,message
-               ,message
-               (str "Expected " (. ,expected "inspect") " but got " (. ,actual "inspect"))))))))
+             "assertion failure: "
+             (if ,(not (empty? messages))
+               ,(first messages)
+               (str "expected " ,(pr-str actual) " to return " (pr-str ,expected) ", but got " (pr-str ,actual))))))))

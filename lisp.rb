@@ -154,15 +154,8 @@ def run_file(path, b)
 end
 
 SAFE_CHARS = /^[A-Za-z_]+$/
-ALT_NAMES = {
-  :and => :and_,
-  :or => :or_,
-  :print => :print_,
-  :throw => :throw_,
-}
 
 def safe_name(name)
-  return ALT_NAMES[name] if ALT_NAMES.key?(name)
   name.to_s.chars.map { |c| c =~ SAFE_CHARS ? c : "_#{c.ord}" }.join.to_sym
 end
 

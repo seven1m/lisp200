@@ -8,7 +8,8 @@
 (def >= (fn [a b] (. a ">=" b)))
 
 (def nil? (fn [a] (. a "nil?")))
-(def throw (fn [a] (raise a)))
+(def throw_ (fn [a] (raise a)))
+(defmacro throw (fn [a] `(throw_ ,a)))
 
 (def length (fn [a] (if a (. a "length") 0)))
 (def empty? (fn [a] (= 0 (length a))))

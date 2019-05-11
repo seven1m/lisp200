@@ -64,5 +64,12 @@
 (assert= 1 (letrec (a 1) a))
 (assert= 2 (letrec (a 1 b (+ a 1)) b))
 (assert= 4 (letrec (a 1 b (+ a 1) c (* b 2)) c))
+(assert= nil (cond))
+(assert= 1 (cond true 1))
+(assert= 2 (cond false 1 true 2))
+(assert= 3 (cond false 1 nil 2 "truthy" 3))
+(assert= 4 (cond false 1 nil 2 false 3 :else 4))
+(assert= 1 (cond true 1 nil 2 false 3 :else 4))
+(assert= 2 (cond false 1 2 2 false 3 :else 4))
 
 (println (str "\n\n" "finished"))

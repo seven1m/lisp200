@@ -11,6 +11,7 @@ class TestRead < Minitest::Test
   def test_read
     assert_equal :foo, READ('foo')
     assert_equal :foo, READ('foo ; comment')
+    assert_equal :":sym", READ(':sym')
     assert_equal [:hello, :world], READ("(hello ; comment\n world)")
     assert_equal 1, READ('1')
     assert_equal -1, READ('-1')
@@ -51,7 +52,15 @@ class TestCompileAndEval < MiniTest::Test
     assert_equal "string", b.eval(code)
   end
 
-  #ARGV.concat ['-n', 'test_def']
+  #ARGV.concat ['-n', 'test_symbol']
+
+  def test_symbol
+    b = binding
+    code = compile(:":symbol", b)
+    assert_equal :symbol, b.eval(code)
+    code = compile([:foo, :":s1", :":s2"], b)
+    assert_equal "foo.(:s1, :s2)", code
+  end
 
   def test_def
     b = binding

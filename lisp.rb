@@ -141,7 +141,7 @@ def compile(ast, b)
       end
     end
   elsif ast.is_a?(Symbol)
-    safe_name(ast).to_s
+    ast.to_s =~ /^:/ ? ast.to_s : safe_name(ast).to_s
   else
     ast.inspect
   end

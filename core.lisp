@@ -19,25 +19,37 @@
 (def last (fn [a] (. a "last")))
 (def nth (fn [a b] (. a "[]" b)))
 
-(defmacro and
+(defmacro cond
   (fn [& args]
       (if (empty? args)
-        true
-        (if (= 1 (length args))
-          (first args)
+        nil
+        (if (= (first args) :else)
+          (nth args 1)
           `(if ,(first args)
-             (and ,@(rest args))
-             ,(first args))))))
+            ,(nth args 1)
+            (cond ,@(rest (rest args))))))))
+
+(defmacro and
+  (fn [& args]
+      (cond (empty? args)
+              true
+            (= 1 (length args))
+              (first args)
+            :else
+              `(if ,(first args)
+                 (and ,@(rest args))
+                 ,(first args)))))
 
 (defmacro or
   (fn [& args]
-      (if (empty? args)
-        false
-        (if (= 1 (length args))
-          (first args)
-          `(if ,(first args)
-             ,(first args)
-             (or ,@(rest args)))))))
+      (cond (empty? args)
+              false
+            (= 1 (length args))
+              (first args)
+            :else
+              `(if ,(first args)
+                 ,(first args)
+                 (or ,@(rest args))))))
 
 (def reduce
      (fn [f init coll]
@@ -45,11 +57,12 @@
 
 (def filter
      (fn [pred a]
-         (if (empty? a)
-           nil
-           (if (pred (first a))
-             (cons (first a) (filter pred (rest a)))
-             (filter pred (rest a))))))
+         (cond (empty? a)
+                 nil
+               (pred (first a))
+                 (cons (first a) (filter pred (rest a)))
+               :else
+                 (filter pred (rest a)))))
 
 (def * (fn [& args]
            (or

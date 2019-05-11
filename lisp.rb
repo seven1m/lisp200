@@ -47,26 +47,19 @@ end
 
 def PRINT(node)
   case node
-  when Array
-    "'(" + node.map { |n| PRINT(n) }.join(' ') + ')'
-  when Symbol
-    node.to_s
-  else
-    node.inspect
+  when Array then "'(" + node.map { |n| PRINT(n) }.join(' ') + ')'
+  when Symbol then node.to_s
+  else node.inspect
   end
 end
 
 MACROS = {}
 
-def is_pair(node)
-  node.is_a?(Array) && node.any?
-end
-
 def quasiquote(ast)
-  if is_pair(ast)
+  if ast.is_a?(Array) && ast.any?
     if ast.first == :unquote
       ast[1]
-    elsif is_pair(ast.first) && ast.first.first == :splice_unquote
+    elsif ast.first.is_a?(Array) && ast.first.any? && ast.first.first == :splice_unquote
       [:concat, ast.first[1], quasiquote(ast[1..-1])]
     else
       [:cons, quasiquote(ast.first), quasiquote(ast[1..-1])]

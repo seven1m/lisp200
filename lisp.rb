@@ -15,7 +15,6 @@ def read_atom(tokens)
   when "`" then [:quasiquote, read_atom(tokens)]
   when "," then [:unquote, read_atom(tokens)]
   when ",@" then [:splice_unquote, read_atom(tokens)]
-  when /\A\s+\z/ then nil
   when /\A".*"\z/ then JSON.parse(token)
   when /\A\-?[0-9]+\.[0-9]+\z/ then token.to_f
   when /\A\-?[0-9]+\z/ then token.to_i

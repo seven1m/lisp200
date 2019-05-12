@@ -75,11 +75,7 @@ def compile(ast, b)
       (_, fn, args) = ast
       fn = compile(fn, b)
       args = compile(args, b)
-      if (method(fn) rescue nil)
-        "#{fn}(*#{args})"
-      else
-        "#{fn}.(*#{args})"
-      end
+      "#{fn}.(*#{args})"
     when :block
       fn = ast[1]
       '&' + compile(ast[1], b)
@@ -125,15 +121,13 @@ def compile(ast, b)
       else
         fn = compile(fn, b)
         args.map! { |a| compile(a, b) }
-        if (method(fn) rescue nil)
-          "#{fn}(#{args.join(', ')})"
-        else
-          "#{fn}.(#{args.join(', ')})"
-        end
+        "#{fn}.(#{args.join(', ')})"
       end
     end
+  elsif ast.is_a?(Symbol) && ast.to_s =~ /^:/
+    ast.to_s
   elsif ast.is_a?(Symbol)
-    ast.to_s =~ /^:/ ? ast.to_s : safe_name(ast).to_s
+    safe_name(ast).to_s
   else
     ast.inspect
   end

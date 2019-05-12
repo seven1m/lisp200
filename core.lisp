@@ -13,9 +13,9 @@
 (def length (fn [a] (if a (. a "length") 0)))
 (def empty? (fn [a] (= 0 (length a))))
 (def list (fn [& args] args))
-(def range (fn [first last] (. Range "new" first last)))
+(def range (fn [first last] (. (. Range "new" first last true) "to_a")))
 (def first (fn [a] (. a "first")))
-(def rest (fn [a] (if (< (length a) 2) (list) (. a "[]" (range 1 -1)))))
+(def rest (fn [a] (if (< (length a) 2) (list) (. a "[]" (. Range "new" 1 -1)))))
 (def last (fn [a] (. a "last")))
 (def nth (fn [a b] (. a "[]" b)))
 

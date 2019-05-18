@@ -173,3 +173,9 @@
              (if ,(not (empty? messages))
                ,(first messages)
                (str "expected " ,(pr-str actual) " to return " (pr-str ,expected) ", but got " (pr-str ,actual))))))))
+
+(def eval
+     (fn [ast]
+         (let [b (. Kernel "binding")
+               ruby (. Kernel "compile" ast b)]
+           (. b "eval" ruby))))

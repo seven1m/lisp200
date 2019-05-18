@@ -72,5 +72,6 @@
 (assert= 1 (cond true 1 nil 2 false 3 :else 4))
 (assert= 2 (cond false 1 2 2 false 3 :else 4))
 (assert= '(1 2 3) (range 1 4))
+(assert= 3 (eval '(+ 1 2)))
 
 (println (str "\n\n" "finished"))

@@ -68,7 +68,7 @@ def quasiquote(ast)
   end
 end
 
-def compile(ast, b)
+public def compile(ast, b)
   if ast.is_a?(Array)
     case ast.first
     when :apply

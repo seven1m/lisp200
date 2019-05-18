@@ -39,12 +39,12 @@ def read_list(tokens)
   raise 'unbalanced parens'
 end
 
-def READ(code)
+public def READ(code)
   tokens = tokenize(code)
   read_atom(tokens)
 end
 
-def PRINT(node)
+public def PRINT(node)
   case node
   when Array then "'(" + node.map { |n| PRINT(n) }.join(' ') + ')'
   when Symbol then node.to_s
@@ -101,7 +101,7 @@ def compile(ast, b)
       (_, obj, message, *args) = ast
       obj = compile(obj, b)
       args.map! { |a| compile(a, b) }
-      send = message.is_a?(String) ? "#{obj}.#{message}(ARGS)" : "#{obj}.send(#{compile(message, b)}, ARGS)"
+      send = message.is_a?(String) ? "#{obj}.#{message}(ARGS)" : "#{obj}.public_send(#{compile(message, b)}, ARGS)"
       if args.any?
         send.sub(/ARGS/, args.join(', '))
       else

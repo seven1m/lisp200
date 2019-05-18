@@ -114,7 +114,7 @@
 
 (def print (fn [a] (. Kernel "print" (. a "to_s"))))
 (def println (fn [a] (print a) (print "\n")))
-(def pr-str (fn [a] (. Object (str "" "PRINT") a)))
+(def pr-str (fn [a] (. Kernel "PRINT" a)))
 (def pr (fn [a] (print (pr-str a))))
 (def prn (fn [a] (pr a) (print "\n")))
 

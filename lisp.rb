@@ -146,14 +146,10 @@ ALT_NAMES = { '=' => 'eq', '*' => 'mul', '/' => 'div', '+' => 'add', '-' => 'sub
 def safe_name(name)
   ALT_NAMES[name.to_s] || name.to_s.chars.map do |c|
     case c
-    when SAFE_CHARS
-      c
-    when '-'
-      '_'
-    when '?'
-      '_q'
-    else
-      "_#{c.ord}"
+    when SAFE_CHARS then c
+    when '-' then '_'
+    when '?' then '_q'
+    else "_#{c.ord}"
     end
   end.join
 end

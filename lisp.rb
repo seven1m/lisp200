@@ -88,7 +88,7 @@ public def compile(ast, b)
       MACROS[name] = b.eval(compile(fn, b))
       nil
     when :do
-      ast[1..-1].map { |n| compile(n, b) }.join("\n")
+      '(' + ast[1..-1].map { |n| compile(n, b) }.join("; ") + ')'
     when :fn
       (_, arg_list, *body) = ast
       body = compile([:do] + body, b)

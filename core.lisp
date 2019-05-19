@@ -85,6 +85,14 @@
                (reduce (fn [t n] (. t "-" n)) 0 args)
                "to_i"))))
 
+(def each
+     (fn [f l]
+         (if (empty? l)
+           nil
+           (do
+             (f (first l))
+             (each f (rest l))))))
+
 (def map
      (fn [f l]
          (if (empty? l)

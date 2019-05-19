@@ -111,6 +111,14 @@
                      (f i (first l))
                      (mi f (rest l) (+ i 1) mi)))))))
 
+(def string->number
+     (fn [s]
+         (. s "to_i")))
+
+(def number->string
+     (fn [s]
+         (. s "to_s")))
+
 (def str
      (fn [& args]
          (if (empty? args)

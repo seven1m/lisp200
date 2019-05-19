@@ -167,16 +167,16 @@ class TestCompileAndEval < MiniTest::Test
 
   def test_defmacro
     b = core_binding
-    assert_nil b.eval(compile([:defmacro, :identity, [:fn, [:x], :x]], b))
+    assert_nil compile([:defmacro, :identity, [:fn, [:x], :x]], b)
     assert_equal '1', compile([:identity, 1], b)
-    assert_nil b.eval(compile([:defmacro, :two, [:fn, [], 2]], b))
+    assert_nil compile([:defmacro, :two, [:fn, [], 2]], b)
     assert_equal '2', compile([:two], b)
-    assert_nil b.eval(compile([:defmacro, :three, [:fn, [], [:identity, 3]]], b))
+    assert_nil compile([:defmacro, :three, [:fn, [], [:identity, 3]]], b)
     assert_equal '3', compile([:three], b)
     assert_equal 'false ? 5 : 4', compile([:unless, false, 4, 5], b)
-    assert_equal 'true ? _43.(2, 3) : _43.(1, 1)', compile([:unless, true, [:+, 1, 1], [:+, 2, 3]], b)
+    assert_equal 'true ? add.(2, 3) : add.(1, 1)', compile([:unless, true, [:+, 1, 1], [:+, 2, 3]], b)
     assert_equal 5, b.eval(compile([:unless, true, [:+, 1, 1], [:+, 2, 3]], b))
-    assert_nil b.eval(compile([:defmacro, :restargs, [:fn, [:&, :args], [:quasiquote, [:list, [:splice_unquote, :args]]]]], b))
+    assert_nil compile([:defmacro, :restargs, [:fn, [:&, :args], [:quasiquote, [:list, [:splice_unquote, :args]]]]], b)
     assert_equal 'list.(6, 7)', compile([:restargs, 6, 7], b)
   end
 

@@ -86,7 +86,7 @@ public def compile(ast, b)
     when :defmacro
       (_, name, fn) = ast
       MACROS[name] = b.eval(compile(fn, b))
-      'nil'
+      nil
     when :do
       ast[1..-1].map { |n| compile(n, b) }.join("\n")
     when :fn
@@ -134,15 +134,28 @@ public def compile(ast, b)
 end
 
 def run_file(path, b)
-  READ("(" + File.read(path) + ")").each do |node|
-    b.eval(compile(node, b))
+  READ('(' + File.read(path) + ')').each do |node|
+    rb = compile(node, b)
+    b.eval(rb) if rb
   end
 end
 
 SAFE_CHARS = /^[A-Za-z_]+$/
+ALT_NAMES = { '=' => 'eq', '*' => 'mul', '/' => 'div', '+' => 'add', '-' => 'sub', '<' => 'lt', '<=' => 'lte', '>' => 'gt', '>=' => 'gte' }
 
 def safe_name(name)
-  name.to_s.chars.map { |c| c =~ SAFE_CHARS ? c : "_#{c.ord}" }.join.to_sym
+  ALT_NAMES[name.to_s] || name.to_s.chars.map do |c|
+    case c
+    when SAFE_CHARS
+      c
+    when '-'
+      '_'
+    when '?'
+      '_q'
+    else
+      "_#{c.ord}"
+    end
+  end.join
 end
 
 def core_binding
@@ -152,7 +165,12 @@ def core_binding
 end
 
 if $0 == __FILE__
-  if ARGV.any?
+  if ARGV.any? && ARGV.first == '--compile'
+    b = core_binding
+    puts File.read(__FILE__).match(/public def PRINT.*?\nend/m).to_s
+    puts READ('(' + File.read('core.lisp') + ')').map { |n| compile(n, b) }.compact.join("\n")
+    puts READ('(' + File.read(ARGV[1]) + ')').map { |n| compile(n, b) }.compact.join("\n")
+  elsif ARGV.any?
     b = core_binding
     run_file(ARGV.first, b)
   else

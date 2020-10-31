@@ -28,7 +28,7 @@ ruby lisp.rb
 
 Then you'll get a REPL:
 
-```
+```lisp
 user> 1
 1
 user> (+ 1 2)
